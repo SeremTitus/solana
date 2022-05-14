@@ -12,11 +12,26 @@ use {
     std::{
         collections::{hash_map::Entry, HashMap, HashSet},
         ops::Index,
-        sync::Arc,
+        sync::{atomic::AtomicBool, Arc},
         time::Instant,
     },
 };
 
+<<<<<<< HEAD
+=======
+pub const MAX_ROOT_DISTANCE_FOR_VOTE_ONLY: Slot = 400;
+
+#[derive(Debug, Default, Copy, Clone)]
+struct SetRootMetrics {
+    timings: SetRootTimings,
+    total_parent_banks: i64,
+    tx_count: i64,
+    dropped_banks_len: i64,
+    accounts_data_len: i64,
+}
+
+#[derive(Debug, Default, Copy, Clone)]
+>>>>>>> 3d96a1ab7 (Block packets in vote-only mode (#24906))
 struct SetRootTimings {
     total_parent_banks: i64,
     total_squash_cache_ms: i64,
@@ -41,6 +56,7 @@ pub struct BankForks {
 
     pub accounts_hash_interval_slots: Slot,
     last_accounts_hash_slot: Slot,
+    in_vote_only_mode: Arc<AtomicBool>,
 }
 
 impl Index<u64> for BankForks {
@@ -58,6 +74,18 @@ impl BankForks {
 
     pub fn banks(&self) -> HashMap<Slot, Arc<Bank>> {
         self.banks.clone()
+    }
+
+    pub fn get_vote_only_mode_signal(&self) -> Arc<AtomicBool> {
+        self.in_vote_only_mode.clone()
+    }
+
+    pub fn len(&self) -> usize {
+        self.banks.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.banks.is_empty()
     }
 
     /// Create a map of bank slot id to the set of ancestors for the bank slot.
@@ -145,6 +173,7 @@ impl BankForks {
             snapshot_config: None,
             accounts_hash_interval_slots: std::u64::MAX,
             last_accounts_hash_slot: root,
+            in_vote_only_mode: Arc::new(AtomicBool::new(false)),
         }
     }
 
